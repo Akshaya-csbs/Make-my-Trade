@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+:root {
+  --background: #0B0B12; /* Deep dark indigo/black */
+  --foreground: #FFFFFF;
+  --card: #1A1A24;
+  --card-foreground: #FFFFFF;
+  --border: #2D2D44;
+  
+  --primary: #8B5CF6; /* Neon Violet */
+  --primary-foreground: #FFFFFF;
+  
+  --secondary: #1A1A24; /* Dark translucent purple-gray for surfaces */
+  --secondary-foreground: #C4B5FD; /* Soft lavender */
+  
+  --accent: #A78BFA; /* Soft neon violet accent */
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+}
+
+body {
+  background: var(--background);
+  background-image: 
+    radial-gradient(circle at 15% 10%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism utilities for dark neon theme */
+.glass {
+  background: rgba(26, 26, 36, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.glass-card {
+  @apply bg-[#0a0a0f] border border-[var(--border)];
+}
+
+/* Custom Scrollbar for sleek UI */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
