@@ -214,7 +214,7 @@ export function MarketTrendsView() {
                       
                       {/* Volume */}
                       <td className="px-6 py-4 font-mono text-sm text-[var(--secondary-foreground)]">
-                        {isLoading ? <div className="h-4 w-12 bg-[var(--border)] rounded animate-pulse" /> : formatNumber(data?.volume)}
+                        {isLoading ? <div className="h-4 w-12 bg-[var(--border)] rounded animate-pulse" /> : formatNumber(data?.volume || 0)}
                       </td>
                       
                       {/* Trend */}
