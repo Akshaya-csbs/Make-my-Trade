@@ -35,8 +35,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             uid: user.uid,
             email: user.email || '',
             displayName: user.displayName || 'Offline User',
-            onboardingCompleted: false,
-            createdAt: new Date(),
+            demographics: {
+              experienceLevel: 'beginner',
+              language: 'en'
+            },
+            financialLiteracyScore: 0,
+            currentCapital: 100000,
+            totalPortfolioValue: 100000,
+            gamification: {
+              xp: 0,
+              level: 1,
+              streak: 0,
+              badges: []
+            }
           });
         }
       } else {
