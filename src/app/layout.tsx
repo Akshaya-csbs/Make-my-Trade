@@ -7,7 +7,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Make my Trade - Smart Investing",
+  title: "Mark my Trade - Smart Investing",
   description: "AI-powered investment learning and paper trading platform",
 };
 

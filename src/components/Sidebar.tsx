@@ -38,7 +38,7 @@ export function Sidebar() {
       <div className="h-16 flex items-center px-6 border-b border-[var(--border)]">
         <div className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent flex items-center gap-2">
           <Logo className="text-primary w-6 h-6" />
-          <span>Make my Trade</span>
+          <span>Mark my Trade</span>
         </div>
       </div>
       
