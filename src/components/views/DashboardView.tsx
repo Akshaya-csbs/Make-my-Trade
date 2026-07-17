@@ -18,19 +18,19 @@ export function DashboardView() {
     setMounted(true);
     // Fetch live market data for key assets
     fetchLiveMarketData([
-      { symbol: 'AAPL', assetClass: 'STOCKS' },
-      { symbol: 'MSFT', assetClass: 'STOCKS' },
-      { symbol: 'BTC-USD', assetClass: 'CRYPTO' },
-      { symbol: 'GC=F', assetClass: 'COMMODITIES' } // Gold
+      { symbol: 'AAPL', assetClass: 'Stock' },
+      { symbol: 'MSFT', assetClass: 'Stock' },
+      { symbol: 'BTC-USD', assetClass: 'Crypto' },
+      { symbol: 'GC=F', assetClass: 'Gold' } // Gold
     ]);
 
     // Poll every 60 seconds
     const interval = setInterval(() => {
       fetchLiveMarketData([
-        { symbol: 'AAPL', assetClass: 'STOCKS' },
-        { symbol: 'MSFT', assetClass: 'STOCKS' },
-        { symbol: 'BTC-USD', assetClass: 'CRYPTO' },
-        { symbol: 'GC=F', assetClass: 'COMMODITIES' }
+        { symbol: 'AAPL', assetClass: 'Stock' },
+        { symbol: 'MSFT', assetClass: 'Stock' },
+        { symbol: 'BTC-USD', assetClass: 'Crypto' },
+        { symbol: 'GC=F', assetClass: 'Gold' }
       ]);
     }, 60000);
 
