@@ -22,6 +22,7 @@ interface TradingStoreState {
   // Actions
   initializePortfolio: (capital: number, holdings: AssetHolding[]) => void;
   updateMarketPrices: (newMarketData: MarketData) => void;
+  resetPortfolio: () => void;
   fetchLiveMarketData: (symbols: { symbol: string, assetClass: AssetClass }[]) => Promise<void>;
   executeTrade: (symbol: string, quantity: number, type: TransactionType) => { success: boolean; message: string };
   calculatePortfolioValue: () => void;
@@ -37,6 +38,10 @@ export const useTradingStore = create<TradingStoreState>((set, get) => ({
   initializePortfolio: (capital, holdings) => {
     set({ currentCapital: capital, holdings, isInitializing: false });
     get().calculatePortfolioValue();
+  },
+
+  resetPortfolio: () => {
+    set({ currentCapital: 100000, totalPortfolioValue: 100000, holdings: [] });
   },
 
   updateMarketPrices: (newMarketData) => {
