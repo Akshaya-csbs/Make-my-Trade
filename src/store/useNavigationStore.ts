@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ViewState = 'dashboard' | 'trade' | 'market' | 'portfolio' | 'settings' | 'learn' | 'coach';
+export type ViewState = 'dashboard' | 'trade' | 'market' | 'portfolio' | 'settings' | 'learn' | 'coach' | 'onboarding';
 
 interface NavigationState {
   activeView: ViewState;
