@@ -11,6 +11,9 @@ export interface CategoryInfo {
   riskLevel: 'Low' | 'Medium' | 'High';
   timeHorizon: string;
   benchmarkSymbol: string;
+  icon?: any;
+  color?: string;
+  subtitle?: string;
 }
 
 interface CategoryModalProps {
