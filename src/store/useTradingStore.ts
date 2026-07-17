@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import { AssetHolding, TransactionType, AssetClass } from '@/types';
+import { db } from '@/lib/firebase/config';
+import { doc, getDoc, setDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
+import { useUserStore } from './useUserStore';
 
 interface MarketData {
   [symbol: string]: {
@@ -26,6 +29,7 @@ interface TradingStoreState {
   fetchLiveMarketData: (symbols: { symbol: string, assetClass: AssetClass }[]) => Promise<void>;
   executeTrade: (symbol: string, quantity: number, type: TransactionType) => { success: boolean; message: string };
   calculatePortfolioValue: () => void;
+  _hydrateFromFirebase: (capital: number, holdings: AssetHolding[]) => void;
 }
 
 export const useTradingStore = create<TradingStoreState>((set, get) => ({
@@ -35,12 +39,27 @@ export const useTradingStore = create<TradingStoreState>((set, get) => ({
   marketData: {},
   isInitializing: true,
 
+  _hydrateFromFirebase: (capital, holdings) => {
+    set({ currentCapital: capital, holdings, isInitializing: false });
+    get().calculatePortfolioValue();
+  },
+
   initializePortfolio: (capital, holdings) => {
+    const uid = useUserStore.getState().profile?.uid;
+    if (uid && uid !== 'user_mock_123') {
+      updateDoc(doc(db, 'users', uid), { currentCapital: capital }).catch(err => console.error(err));
+      setDoc(doc(db, 'portfolios', uid), { holdings, lastUpdated: Date.now() }).catch(err => console.error(err));
+    }
     set({ currentCapital: capital, holdings, isInitializing: false });
     get().calculatePortfolioValue();
   },
 
   resetPortfolio: () => {
+    const uid = useUserStore.getState().profile?.uid;
+    if (uid && uid !== 'user_mock_123') {
+      updateDoc(doc(db, 'users', uid), { currentCapital: 100000 }).catch(err => console.error(err));
+      setDoc(doc(db, 'portfolios', uid), { holdings: [], lastUpdated: Date.now() }).catch(err => console.error(err));
+    }
     set({ currentCapital: 100000, totalPortfolioValue: 100000, holdings: [] });
   },
 
@@ -93,6 +112,7 @@ export const useTradingStore = create<TradingStoreState>((set, get) => ({
   executeTrade: (symbol, quantity, type) => {
     const { currentCapital, holdings, marketData } = get();
     const marketAsset = marketData[symbol];
+    const uid = useUserStore.getState().profile?.uid;
 
     if (!marketAsset) {
       return { success: false, message: 'Market data not available for this symbol.' };
@@ -106,7 +126,6 @@ export const useTradingStore = create<TradingStoreState>((set, get) => ({
         return { success: false, message: 'Insufficient funds.' };
       }
 
-      // Update holdings
       const existingHolding = holdings.find(h => h.symbol === symbol);
       let newHoldings = [...holdings];
 
@@ -129,12 +148,18 @@ export const useTradingStore = create<TradingStoreState>((set, get) => ({
         });
       }
 
-      set({
-        currentCapital: currentCapital - totalCost,
-        holdings: newHoldings,
-      });
-      
+      const newCapital = currentCapital - totalCost;
+      set({ currentCapital: newCapital, holdings: newHoldings });
       get().calculatePortfolioValue();
+
+      if (uid && uid !== 'user_mock_123') {
+        updateDoc(doc(db, 'users', uid), { currentCapital: newCapital }).catch(err => console.error(err));
+        setDoc(doc(db, 'portfolios', uid), { holdings: newHoldings, lastUpdated: Date.now() }).catch(err => console.error(err));
+        addDoc(collection(db, `users/${uid}/transactions`), {
+          symbol, type, quantity, price, timestamp: Date.now()
+        }).catch(err => console.error(err));
+      }
+
       return { success: true, message: `Successfully bought ${quantity} shares of ${symbol}.` };
     } 
     
@@ -147,10 +172,8 @@ export const useTradingStore = create<TradingStoreState>((set, get) => ({
 
       let newHoldings = [...holdings];
       if (existingHolding.quantity === quantity) {
-        // Remove holding completely
         newHoldings = newHoldings.filter(h => h.symbol !== symbol);
       } else {
-        // Reduce quantity
         newHoldings = newHoldings.map(h =>
           h.symbol === symbol
             ? { ...h, quantity: h.quantity - quantity }
@@ -158,15 +181,42 @@ export const useTradingStore = create<TradingStoreState>((set, get) => ({
         );
       }
 
-      set({
-        currentCapital: currentCapital + totalCost,
-        holdings: newHoldings,
-      });
-
+      const newCapital = currentCapital + totalCost;
+      set({ currentCapital: newCapital, holdings: newHoldings });
       get().calculatePortfolioValue();
+
+      if (uid && uid !== 'user_mock_123') {
+        updateDoc(doc(db, 'users', uid), { currentCapital: newCapital }).catch(err => console.error(err));
+        setDoc(doc(db, 'portfolios', uid), { holdings: newHoldings, lastUpdated: Date.now() }).catch(err => console.error(err));
+        addDoc(collection(db, `users/${uid}/transactions`), {
+          symbol, type, quantity, price, timestamp: Date.now()
+        }).catch(err => console.error(err));
+      }
+
       return { success: true, message: `Successfully sold ${quantity} shares of ${symbol}.` };
     }
 
     return { success: false, message: 'Invalid transaction type.' };
   }
 }));
+
+// Sync TradingStore when UserStore authenticates
+useUserStore.subscribe(async (state) => {
+  const uid = state.profile?.uid;
+  if (uid && uid !== 'user_mock_123' && state.isAuthInitialized) {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', uid));
+      const portfolioDoc = await getDoc(doc(db, 'portfolios', uid));
+      
+      const capital = userDoc.exists() ? userDoc.data().currentCapital : 100000;
+      const holdings = portfolioDoc.exists() ? portfolioDoc.data().holdings : [];
+      
+      useTradingStore.getState()._hydrateFromFirebase(capital, holdings);
+    } catch (err) {
+      console.error("Failed to hydrate portfolio from Firestore", err);
+    }
+  } else if (!uid) {
+    // Reset if logged out
+    useTradingStore.getState()._hydrateFromFirebase(100000, []);
+  }
+});

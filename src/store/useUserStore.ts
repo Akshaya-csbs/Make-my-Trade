@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { UserProfile } from '@/types';
+import { db } from '@/lib/firebase/config';
+import { doc, updateDoc } from 'firebase/firestore';
 
 interface UserStoreState {
   profile: UserProfile | null;
@@ -14,40 +16,35 @@ interface UserStoreState {
   completeOnboarding: (finalData: Partial<UserProfile>) => void;
 }
 
-const DEFAULT_PROFILE: UserProfile = {
-  uid: 'user_mock_123',
-  email: 'trader@example.com',
-  displayName: 'Trader Joe',
-  demographics: {
-    experienceLevel: 'beginner',
-    language: 'en',
-  },
-  financialLiteracyScore: 0,
-  currentCapital: 100000,
-  totalPortfolioValue: 100000,
-  gamification: {
-    xp: 0,
-    level: 1,
-    streak: 0,
-    badges: [],
-  },
-};
-
-export const useUserStore = create<UserStoreState>((set) => ({
+export const useUserStore = create<UserStoreState>((set, get) => ({
   profile: null,
   isOnboarded: false,
   isAuthInitialized: false,
 
-  setProfile: (profile) => set({ profile }),
+  setProfile: (profile) => set({ profile, isOnboarded: (profile as any).onboardingCompleted ?? false }),
   clearProfile: () => set({ profile: null, isOnboarded: false }),
   setAuthInitialized: (val) => set({ isAuthInitialized: val }),
 
-  updateProfile: (data) => set((state) => ({
-    profile: state.profile ? { ...state.profile, ...data } : null
-  })),
+  updateProfile: (data) => {
+    const state = get();
+    if (state.profile && state.profile.uid && state.profile.uid !== 'user_mock_123') {
+      const userRef = doc(db, 'users', state.profile.uid);
+      updateDoc(userRef, data).catch(err => console.error(err));
+    }
+    set((s) => ({
+      profile: s.profile ? { ...s.profile, ...data } : null
+    }));
+  },
 
-  completeOnboarding: (finalData) => set((state) => ({
-    profile: state.profile ? { ...state.profile, ...finalData } : null,
-    isOnboarded: true,
-  }))
+  completeOnboarding: (finalData) => {
+    const state = get();
+    if (state.profile && state.profile.uid && state.profile.uid !== 'user_mock_123') {
+      const userRef = doc(db, 'users', state.profile.uid);
+      updateDoc(userRef, { ...finalData, onboardingCompleted: true }).catch(err => console.error(err));
+    }
+    set((s) => ({
+      profile: s.profile ? { ...s.profile, ...finalData } : null,
+      isOnboarded: true,
+    }));
+  }
 }));
